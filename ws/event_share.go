@@ -1,5 +1,9 @@
 package ws
 
+import (
+	"fmt"
+)
+
 func init() {
 	register("share", func() Event {
 		return &StartShare{}
@@ -12,6 +16,13 @@ func (e *StartShare) Execute(rooms *Rooms, current ClientInfo) error {
 	room, err := rooms.CurrentRoom(current)
 	if err != nil {
 		return err
+	}
+
+	// 检查是否已经有人在投屏
+	for _, user := range room.Users {
+		if user.Streaming && user.ID != current.ID {
+			return fmt.Errorf("another user is already sharing screen")
+		}
 	}
 
 	room.Users[current.ID].Streaming = true

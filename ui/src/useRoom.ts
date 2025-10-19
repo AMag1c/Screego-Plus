@@ -1,5 +1,6 @@
 import {useSnackbar} from 'notistack';
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 
 import {
     ICEServer,
@@ -34,6 +35,8 @@ export interface UseRoom {
     share: () => void;
     setName: (name: string) => void;
     stopShare: () => void;
+    exitRoom: () => void;
+    dissolveRoom: () => void;
 }
 
 const relayConfig: Partial<RTCConfiguration> =
@@ -160,6 +163,7 @@ const clientSession = async ({
 export type FCreateRoom = (room: RoomCreate | JoinRoom) => Promise<void>;
 
 export const useRoom = (config: UIConfig): UseRoom => {
+    const {t} = useTranslation();
     const [roomID, setRoomID] = useRoomID();
     const {enqueueSnackbar} = useSnackbar();
     const conn = React.useRef<WebSocket | undefined>(undefined);
@@ -189,7 +193,7 @@ export const useRoom = (config: UIConfig): UseRoom => {
                             setRoomID(event.payload.id);
                         } else {
                             resolve();
-                            enqueueSnackbar('Unknown Event: ' + event.type, {variant: 'error'});
+                            enqueueSnackbar(`${t('unknownEvent')}: ${event.type}`, {variant: 'error'});
                             ws.close(1000, 'received unknown event');
                         }
                         return;
@@ -292,6 +296,26 @@ export const useRoom = (config: UIConfig): UseRoom => {
                                       }
                                     : current
                             );
+                            return;
+                        case 'dissolve':
+                            // Handle dissolve room acknowledgment
+                            enqueueSnackbar(t('roomDissolved'), {variant: 'success'});
+                            // Exit the room after dissolution
+                            exitRoom();
+                            return;
+                        case 'Error':
+                            // 处理后端错误消息
+                            let errorMessage = event.payload.message;
+                            // 翻译特定的错误消息
+                            if (errorMessage === 'another user is already sharing screen') {
+                                errorMessage = t('alreadySharing');
+                            }
+                            enqueueSnackbar(errorMessage, {variant: 'error'});
+                            return;
+                        default:
+                            // Handle unknown message types
+                            const unknownEvent = event as any;
+                            enqueueSnackbar(`${t('malformedMessage')}: ${unknownEvent.type}`, {variant: 'error'});
                     }
                 };
                 ws.onclose = (event) => {
@@ -299,7 +323,21 @@ export const useRoom = (config: UIConfig): UseRoom => {
                         resolve();
                         first = false;
                     }
-                    enqueueSnackbar(event.reason, {variant: 'error', persist: true});
+                    // 翻译后端返回的关闭原因
+                    let message = event.reason;
+                    if (event.reason === 'Room Dissolved') {
+                        message = t('roomDissolvedByOwner');
+                    } else if (event.reason === 'User Left') {
+                        message = t('userLeft');
+                    } else if (event.reason && event.reason.trim()) {
+                        // 如果有其他原因，直接显示
+                        message = event.reason;
+                    } else {
+                        // 如果原因为空，不显示错误
+                        setState(false);
+                        return;
+                    }
+                    enqueueSnackbar(message, {variant: event.reason === 'Room Dissolved' ? 'info' : 'error'});
                     setState(false);
                 };
                 ws.onerror = (err) => {
@@ -322,14 +360,14 @@ export const useRoom = (config: UIConfig): UseRoom => {
     const share = async () => {
         if (!navigator.mediaDevices) {
             enqueueSnackbar(
-                'Could not start presentation. Are you using https? (mediaDevices undefined)',
+                t('couldNotStartPresentationHTTPS'),
                 {variant: 'error', persist: true}
             );
             return;
         }
         if (typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
             enqueueSnackbar(
-                `Could not start presentation. Your browser likely doesn't support screensharing. (mediaDevices.getDeviceMedia ${typeof navigator.mediaDevices.getDisplayMedia})`,
+                `${t('couldNotStartPresentationBrowser')} (mediaDevices.getDeviceMedia ${typeof navigator.mediaDevices.getDisplayMedia})`,
                 {variant: 'error', persist: true}
             );
             return;
@@ -348,7 +386,7 @@ export const useRoom = (config: UIConfig): UseRoom => {
             });
         } catch (e) {
             console.log('Could not getDisplayMedia', e);
-            enqueueSnackbar(`Could not start presentation. (getDisplayMedia error). ${e}`, {
+            enqueueSnackbar(`${t('couldNotStartPresentationError')}. ${e}`, {
                 variant: 'error',
                 persist: true,
             });
@@ -376,6 +414,45 @@ export const useRoom = (config: UIConfig): UseRoom => {
         conn.current?.send(JSON.stringify({type: 'name', payload: {username: name}}));
     };
 
+    const exitRoom = (): void => {
+        // 如果正在共享，停止共享
+        if (stream.current) {
+            stopShare();
+        }
+
+        // 关闭所有连接
+        Object.values(host.current).forEach((peer) => {
+            peer.close();
+        });
+        Object.values(client.current).forEach((peer) => {
+            peer.close();
+        });
+        host.current = {};
+        client.current = {};
+
+        // 关闭WebSocket连接
+        if (conn.current) {
+            conn.current.close();
+            conn.current = undefined;
+        }
+
+        // 重置状态
+        setState(false);
+
+        // 清除URL参数，返回房间管理页面
+        setRoomID(undefined);
+    };
+
+    const dissolveRoom = (): void => {
+        // 发送解散房间消息到服务器
+        if (conn.current && conn.current.readyState === conn.current.OPEN) {
+            conn.current.send(JSON.stringify({type: 'dissolve', payload: {}}));
+        }
+
+        // 然后执行退出房间逻辑
+        exitRoom();
+    };
+
     React.useEffect(() => {
         if (roomID) {
             const create = getFromURL('create') === 'true';
@@ -401,5 +478,5 @@ export const useRoom = (config: UIConfig): UseRoom => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return {state, room, share, stopShare, setName};
+    return {state, room, share, stopShare, setName, exitRoom, dissolveRoom};
 };

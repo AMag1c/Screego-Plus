@@ -7,6 +7,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import VolumeMuteIcon from '@mui/icons-material/VolumeOff';
 import VolumeIcon from '@mui/icons-material/VolumeUp';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import LogoutIcon from '@mui/icons-material/Logout';
 import {useHotkeys} from 'react-hotkeys-hook';
 import {Video} from './Video';
 import makeStyles from '@mui/styles/makeStyles';
@@ -15,19 +17,20 @@ import {useSnackbar} from 'notistack';
 import {RoomUser} from './message';
 import {useSettings, VideoDisplayMode} from './settings';
 import {SettingDialog} from './SettingDialog';
+import {useTranslation} from 'react-i18next';
 
 const HostStream: unique symbol = Symbol('mystream');
 
-const flags = (user: RoomUser) => {
+const flags = (user: RoomUser, t: (key: string) => string) => {
     const result: string[] = [];
     if (user.you) {
-        result.push('You');
+        result.push(t('you'));
     }
     if (user.owner) {
-        result.push('Owner');
+        result.push(t('owner'));
     }
     if (user.streaming) {
-        result.push('Streaming');
+        result.push(t('streaming'));
     }
     if (!result.length) {
         return '';
@@ -58,12 +61,17 @@ export const Room = ({
     share,
     stopShare,
     setName,
+    exitRoom,
+    dissolveRoom,
 }: {
     state: ConnectedRoom;
     share: () => void;
     stopShare: () => void;
     setName: (name: string) => void;
+    exitRoom: () => void;
+    dissolveRoom: () => void;
 }) => {
+    const {t} = useTranslation();
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const {enqueueSnackbar} = useSnackbar();
@@ -115,8 +123,8 @@ export const Room = ({
 
     const copyLink = () => {
         navigator?.clipboard?.writeText(window.location.href)?.then(
-            () => enqueueSnackbar('Link Copied', {variant: 'success'}),
-            (err) => enqueueSnackbar('Copy Failed ' + err, {variant: 'error'})
+            () => enqueueSnackbar(t('linkCopied'), {variant: 'success'}),
+            (err) => enqueueSnackbar(t('copyFailed') + ' ' + err, {variant: 'error'})
         );
     };
 
@@ -200,7 +208,7 @@ export const Room = ({
         <div className={classes.videoContainer}>
             {controlVisible && (
                 <Paper className={classes.title} elevation={10} {...setHoverState}>
-                    <Tooltip title="Copy Link">
+                    <Tooltip title={t('copyLink')}>
                         <Typography
                             variant="h4"
                             component="h4"
@@ -231,7 +239,7 @@ export const Room = ({
                         transform: 'translate(-50%, -50%)',
                     }}
                 >
-                    no stream available
+                    {t('noStreamAvailable')}
                 </Typography>
             )}
 
@@ -241,28 +249,44 @@ export const Room = ({
                         <AudioControl video={videoElement} />
                     )}
                     <Box whiteSpace="nowrap">
-                        {state.hostStream ? (
-                            <Tooltip title="Cancel Presentation" arrow>
-                                <IconButton onClick={stopShare} size="large">
-                                    <CancelPresentationIcon fontSize="large" />
-                                </IconButton>
-                            </Tooltip>
-                        ) : (
-                            <Tooltip title="Start Presentation" arrow>
-                                <IconButton onClick={share} size="large">
-                                    <PresentToAllIcon fontSize="large" />
-                                </IconButton>
-                            </Tooltip>
-                        )}
+                        {/* 检查是否有其他人在投屏 */}
+                        {(() => {
+                            const someoneElseStreaming = state.users.some(
+                                (user) => user.streaming && !user.you
+                            );
+
+                            if (state.hostStream) {
+                                // 自己正在投屏，显示停止按钮
+                                return (
+                                    <Tooltip title={t('cancelPresentation')} arrow>
+                                        <IconButton onClick={stopShare} size="large">
+                                            <CancelPresentationIcon fontSize="large" />
+                                        </IconButton>
+                                    </Tooltip>
+                                );
+                            } else if (someoneElseStreaming) {
+                                // 其他人在投屏，隐藏开始按钮
+                                return null;
+                            } else {
+                                // 没人投屏，显示开始按钮
+                                return (
+                                    <Tooltip title={t('startPresentation')} arrow>
+                                        <IconButton onClick={share} size="large">
+                                            <PresentToAllIcon fontSize="large" />
+                                        </IconButton>
+                                    </Tooltip>
+                                );
+                            }
+                        })()}
 
                         <Tooltip
                             classes={{tooltip: classes.noMaxWidth}}
                             title={
                                 <div>
-                                    <Typography variant="h5">Member List</Typography>
+                                    <Typography variant="h5">{t('memberList')}</Typography>
                                     {state.users.map((user) => (
                                         <Typography key={user.id}>
-                                            {user.name} {flags(user)}
+                                            {user.name} {flags(user, t)}
                                         </Typography>
                                     ))}
                                 </div>
@@ -273,7 +297,7 @@ export const Room = ({
                                 <PeopleIcon fontSize="large" />
                             </Badge>
                         </Tooltip>
-                        <Tooltip title="Fullscreen" arrow>
+                        <Tooltip title={t('fullscreen')} arrow>
                             <IconButton
                                 onClick={() => handleFullscreen()}
                                 disabled={!selectedStream}
@@ -283,11 +307,31 @@ export const Room = ({
                             </IconButton>
                         </Tooltip>
 
-                        <Tooltip title="Settings" arrow>
+                        <Tooltip title={t('settings')} arrow>
                             <IconButton onClick={() => setOpen(true)} size="large">
                                 <SettingsIcon fontSize="large" />
                             </IconButton>
                         </Tooltip>
+
+                        {/* 退出房间按钮 */}
+                        <Tooltip title={t('exitRoom')} arrow>
+                            <IconButton onClick={exitRoom} size="large">
+                                <ExitToAppIcon fontSize="large" />
+                            </IconButton>
+                        </Tooltip>
+
+                        {/* 房主解散房间按钮 */}
+                        {state.users.find(u => u.you && u.owner) && (
+                            <Tooltip title={t('dissolveRoom')} arrow>
+                                <IconButton
+                                    onClick={dissolveRoom}
+                                    size="large"
+                                    color="warning"
+                                >
+                                    <LogoutIcon fontSize="large" />
+                                </IconButton>
+                            </Tooltip>
+                        )}
                     </Box>
                 </Paper>
             )}
@@ -333,7 +377,7 @@ export const Room = ({
                             align="center"
                             className={classes.smallVideoLabel}
                         >
-                            You
+                            {t('you')}
                         </Typography>
                     </Paper>
                 )}

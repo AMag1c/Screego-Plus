@@ -2,6 +2,7 @@ import {RoomMode, UIConfig} from './message';
 import {useSnackbar} from 'notistack';
 import React from 'react';
 import {urlWithSlash} from './url';
+import {useTranslation} from 'react-i18next';
 
 export interface UseConfig extends UIConfig {
     login: (username: string, password: string) => Promise<void>;
@@ -11,6 +12,7 @@ export interface UseConfig extends UIConfig {
 }
 
 export const useConfig = (): UseConfig => {
+    const {t} = useTranslation();
     const {enqueueSnackbar} = useSnackbar();
     const [{loading, ...config}, setConfig] = React.useState<UIConfig & {loading: boolean}>({
         authMode: 'all',
@@ -35,20 +37,20 @@ export const useConfig = (): UseConfig => {
         const result = await fetch(`${urlWithSlash}login`, {method: 'POST', body});
         const json = await result.json();
         if (result.status !== 200) {
-            enqueueSnackbar('Login Failed: ' + json.message, {variant: 'error'});
+            enqueueSnackbar(`${t('loginFailed')}: ${json.message}`, {variant: 'error'});
         } else {
             await refetch();
-            enqueueSnackbar('Logged in!', {variant: 'success'});
+            enqueueSnackbar(t('loggedIn'), {variant: 'success'});
         }
     };
 
     const logout = async () => {
         const result = await fetch(`${urlWithSlash}logout`, {method: 'POST'});
         if (result.status !== 200) {
-            enqueueSnackbar('Logout Failed: ' + (await result.text()), {variant: 'error'});
+            enqueueSnackbar(`${t('logoutFailed')}: ${await result.text()}`, {variant: 'error'});
         } else {
             await refetch();
-            enqueueSnackbar('Logged Out.', {variant: 'success'});
+            enqueueSnackbar(t('loggedOut'), {variant: 'success'});
         }
     };
 

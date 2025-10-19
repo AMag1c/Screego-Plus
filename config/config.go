@@ -41,8 +41,8 @@ type Config struct {
 	TLSCertFile string `split_words:"true"`
 	TLSKeyFile  string `split_words:"true"`
 
-	ServerTLS             bool   `split_words:"true"`
-	ServerAddress         string `default:":5050" split_words:"true"`
+	ServerTLS             bool   `default:"false" split_words:"true"`
+	ServerAddress         string `default:":9101" split_words:"true"`
 	Secret                []byte `split_words:"true"`
 	SessionTimeoutSeconds int    `default:"0" split_words:"true"`
 

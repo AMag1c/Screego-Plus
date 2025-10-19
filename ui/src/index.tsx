@@ -4,6 +4,8 @@ import './global.css';
 import {Button, createTheme, CssBaseline, ThemeProvider, StyledEngineProvider} from '@mui/material';
 import {Router} from './Router';
 import {SnackbarProvider} from 'notistack';
+import {useTranslation} from 'react-i18next';
+import './i18n';
 
 const theme = createTheme({
     components: {
@@ -67,6 +69,7 @@ const theme = createTheme({
 });
 
 const Snackbar: React.FC<React.PropsWithChildren> = ({children}) => {
+    const {t} = useTranslation();
     const notistackRef = React.createRef<any>();
     const onClickDismiss = (key: unknown) => () => {
         notistackRef.current?.closeSnackbar(key);
@@ -78,7 +81,7 @@ const Snackbar: React.FC<React.PropsWithChildren> = ({children}) => {
             ref={notistackRef}
             action={(key) => (
                 <Button onClick={onClickDismiss(key)} size="small">
-                    Dismiss
+                    {t('dismiss')}
                 </Button>
             )}
         >

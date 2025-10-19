@@ -53,6 +53,11 @@ func Router(conf config.Config, rooms *ws.Rooms, users *auth.Users, version stri
 			CloseRoomWhenOwnerLeaves: conf.CloseRoomWhenOwnerLeaves,
 		})
 	})
+	router.Methods("GET").Path("/rooms").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		roomList := rooms.GetRoomList()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(roomList)
+	})
 	router.Methods("GET").Path("/health").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		i, err := rooms.Count()
 		status := "up"

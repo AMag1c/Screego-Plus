@@ -127,6 +127,24 @@ func (r *Rooms) Count() (int, string) {
 	}
 }
 
+type RoomInfo struct {
+	ID        string    `json:"id"`
+	UserCount int       `json:"userCount"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+func (r *Rooms) GetRoomList() []RoomInfo {
+	roomList := make([]RoomInfo, 0)
+	for _, room := range r.Rooms {
+		roomList = append(roomList, RoomInfo{
+			ID:        room.ID,
+			UserCount: len(room.Users),
+			CreatedAt: room.CreatedAt,
+		})
+	}
+	return roomList
+}
+
 func (r *Rooms) closeRoom(roomID string) {
 	room, ok := r.Rooms[roomID]
 	if !ok {

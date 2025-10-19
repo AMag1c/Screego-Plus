@@ -3,6 +3,7 @@ package ws
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/rs/xid"
 	"github.com/screego/server/config"
@@ -63,6 +64,7 @@ func (e *Create) Execute(rooms *Rooms, current ClientInfo) error {
 		CloseOnOwnerLeave: e.CloseOnOwnerLeave,
 		Mode:              e.Mode,
 		Sessions:          map[xid.ID]*RoomSession{},
+		CreatedAt:         time.Now(),
 		Users: map[xid.ID]*User{
 			current.ID: {
 				ID:        current.ID,

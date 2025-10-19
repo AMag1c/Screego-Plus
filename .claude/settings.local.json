@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install react-i18next i18next i18next-browser-languagedetector)",
+      "Bash(npm install react-i18next i18next i18next-browser-languagedetector --legacy-peer-deps)",
+      "Bash(npm run)",
+      "Bash(go run:*)",
+      "Bash(npm start)",
+      "Bash(SCREEGO_SERVER_TLS=false SCREEGO_SERVER_ADDRESS=:9102 SCREEGO_EXTERNAL_IP=127.0.0.1 SCREEGO_TURN_ADDRESS=:3478 SCREEGO_AUTH_MODE=none SCREEGO_CORS_ALLOWED_ORIGINS=http://localhost:9101,http://127.0.0.1:9101 SCREEGO_LOG_LEVEL=debug go run:*)",
+      "Bash(SCREEGO_SERVER_TLS=false SCREEGO_SERVER_ADDRESS=:9101 SCREEGO_EXTERNAL_IP=127.0.0.1 SCREEGO_TURN_ADDRESS=:3478 SCREEGO_AUTH_MODE=none SCREEGO_CORS_ALLOWED_ORIGINS=http://localhost:9100,http://127.0.0.1:9100 SCREEGO_LOG_LEVEL=debug go run:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(awk:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 15808 /T\")",
+      "Bash(curl:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -26,6 +26,7 @@ type Room struct {
 	Mode              ConnectionMode
 	Users             map[xid.ID]*User
 	Sessions          map[xid.ID]*RoomSession
+	CreatedAt         time.Time
 }
 
 const (

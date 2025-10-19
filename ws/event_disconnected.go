@@ -3,7 +3,6 @@ package ws
 import (
 	"bytes"
 
-	"github.com/gorilla/websocket"
 	"github.com/screego/server/ws/outgoing"
 )
 
@@ -59,11 +58,19 @@ func (e *Disconnected) executeNoError(rooms *Rooms, current ClientInfo) {
 		}
 	}
 
-	if user.Owner && room.CloseOnOwnerLeave {
-		for _, member := range room.Users {
-			delete(rooms.connected, member.ID)
-			member.WriteTimeout(outgoing.CloseWriter{Code: websocket.CloseNormalClosure, Reason: CloseOwnerLeft})
+	// 如果房主离开
+	if user.Owner {
+		// 如果房间还有其他人，转移房主权限给下一个用户
+		if len(room.Users) > 0 {
+			// 找到下一个用户作为新房主
+			for _, nextUser := range room.Users {
+				nextUser.Owner = true
+				break
+			}
+			room.notifyInfoChanged()
+			return
 		}
+		// 如果房间没人了，关闭房间
 		rooms.closeRoom(roomID)
 		return
 	}

@@ -19,6 +19,7 @@ import {
     VideoDisplayMode,
 } from './settings';
 import {NumberField} from './NumberField';
+import {useTranslation} from 'react-i18next';
 
 export interface SettingDialogProps {
     open: boolean;
@@ -37,6 +38,7 @@ const getAvailableCodecs = (): PreferredCodec[] => {
 const NativeCodecs = getAvailableCodecs();
 
 export const SettingDialog = ({open, setOpen, updateName, saveSettings}: SettingDialogProps) => {
+    const {t} = useTranslation();
     const [settingsInput, setSettingsInput] = React.useState(loadSettings);
 
     const doSubmit = () => {
@@ -45,18 +47,44 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
         setOpen(false);
     };
 
+    const restoreDefaults = () => {
+        const defaultSettings: Settings = {
+            displayMode: VideoDisplayMode.FitToWindow,
+            framerate: 30,
+            preferCodec: CodecDefault,
+            name: '',
+        };
+        setSettingsInput(defaultSettings);
+    };
+
     const {name, preferCodec, displayMode, framerate} = settingsInput;
+
+    // 显示模式翻译函数
+    const getDisplayModeLabel = (mode: VideoDisplayMode): string => {
+        switch (mode) {
+            case VideoDisplayMode.FitToWindow:
+                return t('displayModeFitToWindow');
+            case VideoDisplayMode.FitWidth:
+                return t('displayModeFitWidth');
+            case VideoDisplayMode.FitHeight:
+                return t('displayModeFitHeight');
+            case VideoDisplayMode.OriginalSize:
+                return t('displayModeOriginalSize');
+            default:
+                return mode;
+        }
+    };
 
     return (
         <Dialog open={open} onClose={() => setOpen(false)} maxWidth={'xs'} fullWidth>
-            <DialogTitle>Settings</DialogTitle>
+            <DialogTitle>{t('settings')}</DialogTitle>
             <DialogContent>
                 <form onSubmit={doSubmit}>
                     <Box paddingBottom={1}>
                         <TextField
                             autoFocus
                             margin="dense"
-                            label="Username"
+                            label={t('username')}
                             value={name}
                             onChange={(e) =>
                                 setSettingsInput((c) => ({...c, name: e.target.value}))
@@ -83,7 +111,7 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                                     }))
                                 }
                                 renderInput={(params) => (
-                                    <TextField {...params} label="Preferred Codec" />
+                                    <TextField {...params} label={t('preferredCodec')} />
                                 )}
                             />
                         </Box>
@@ -91,6 +119,7 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                     <Box paddingTop={1}>
                         <Autocomplete<VideoDisplayMode>
                             options={Object.values(VideoDisplayMode)}
+                            getOptionLabel={getDisplayModeLabel}
                             onChange={(_, value) =>
                                 setSettingsInput((c) => ({
                                     ...c,
@@ -99,12 +128,12 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                             }
                             value={displayMode}
                             fullWidth
-                            renderInput={(params) => <TextField {...params} label="Display Mode" />}
+                            renderInput={(params) => <TextField {...params} label={t('displayMode')} />}
                         />
                     </Box>
                     <Box paddingTop={1}>
                         <NumberField
-                            label="FrameRate"
+                            label={t('frameRate')}
                             min={1}
                             onChange={(framerate) => setSettingsInput((c) => ({...c, framerate}))}
                             value={framerate}
@@ -114,11 +143,14 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                 </form>
             </DialogContent>
             <DialogActions>
+                <Button onClick={restoreDefaults} color="secondary">
+                    {t('restoreDefaults')}
+                </Button>
                 <Button onClick={() => setOpen(false)} color="primary">
-                    Cancel
+                    {t('cancel')}
                 </Button>
                 <Button onClick={doSubmit} color="primary">
-                    Save
+                    {t('save')}
                 </Button>
             </DialogActions>
         </Dialog>

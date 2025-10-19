@@ -11,8 +11,10 @@ import {
 } from '@mui/material';
 import makeStyles from '@mui/styles/makeStyles';
 import {green} from '@mui/material/colors';
+import {useTranslation} from 'react-i18next';
 
 export const LoginForm = ({config: {login}, hide}: {config: UseConfig; hide?: () => void}) => {
+    const {t} = useTranslation();
     const [user, setUser] = React.useState('');
     const [pass, setPass] = React.useState('');
     const [loading, setLoading] = React.useState(false);
@@ -30,10 +32,10 @@ export const LoginForm = ({config: {login}, hide}: {config: UseConfig; hide?: ()
             <FormControl fullWidth>
                 <form onSubmit={submit}>
                     <div style={{display: 'flex', alignItems: 'center'}}>
-                        <Typography style={{flex: 1}}>Login to Screego</Typography>
+                        <Typography style={{flex: 1}}>{t('loginToScreego')}</Typography>
                         {hide ? (
                             <Button variant="outlined" size="small" onClick={hide}>
-                                Go Back
+                                {t('goBack')}
                             </Button>
                         ) : undefined}
                     </div>
@@ -41,7 +43,7 @@ export const LoginForm = ({config: {login}, hide}: {config: UseConfig; hide?: ()
                         fullWidth
                         value={user}
                         onChange={(e) => setUser(e.target.value)}
-                        label="Username"
+                        label={t('username')}
                         size="small"
                         margin="dense"
                     />
@@ -50,7 +52,7 @@ export const LoginForm = ({config: {login}, hide}: {config: UseConfig; hide?: ()
                         value={pass}
                         type="password"
                         onChange={(e) => setPass(e.target.value)}
-                        label="Password"
+                        label={t('password')}
                         size="small"
                         margin="dense"
                     />
@@ -62,7 +64,7 @@ export const LoginForm = ({config: {login}, hide}: {config: UseConfig; hide?: ()
                             fullWidth
                             variant="contained"
                         >
-                            Login
+                            {t('login')}
                         </LoadingButton>
                     </Box>
                 </form>

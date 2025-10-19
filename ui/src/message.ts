@@ -14,6 +14,12 @@ export interface UIConfig {
     closeRoomWhenOwnerLeaves: boolean;
 }
 
+export interface RoomInfoSimple {
+    id: string;
+    userCount: number;
+    createdAt: string;
+}
+
 export interface RoomConfiguration {
     id?: string;
     closeOnOwnerLeave?: boolean;
@@ -80,6 +86,8 @@ export type HostOffer = Typed<P2PMessage<RTCSessionDescriptionInit>, 'hostoffer'
 export type ClientAnswer = Typed<P2PMessage<RTCSessionDescriptionInit>, 'clientanswer'>;
 export type StartSharing = Typed<{}, 'share'>;
 export type StopShare = Typed<{}, 'stopshare'>;
+export type ExitRoom = Typed<{}, 'exit'>;
+export type DissolveRoom = Typed<{}, 'dissolve'>;
 export type RoomCreate = Typed<RoomConfiguration & {joinIfExist?: boolean}, 'create'>;
 export type JoinRoom = Typed<JoinConfiguration, 'join'>;
 export type EndShare = Typed<string, 'endshare'>;
@@ -93,7 +101,8 @@ export type IncomingMessage =
     | ClientICECandidate
     | HostOffer
     | EndShare
-    | ClientAnswer;
+    | ClientAnswer
+    | DissolveRoom;
 
 export type OutgoingMessage =
     | RoomCreate
@@ -104,4 +113,6 @@ export type OutgoingMessage =
     | HostOffer
     | StopShare
     | ClientAnswer
-    | StartSharing;
+    | StartSharing
+    | ExitRoom
+    | DissolveRoom;

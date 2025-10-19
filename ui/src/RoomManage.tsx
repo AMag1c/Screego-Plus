@@ -2,9 +2,7 @@ import React from 'react';
 import {
     Box,
     Button,
-    Checkbox,
     FormControl,
-    FormControlLabel,
     Grid,
     Paper,
     TextField,
@@ -16,17 +14,20 @@ import {UIConfig} from './message';
 import {getRoomFromURL} from './useRoomID';
 import {authModeToRoomMode, UseConfig} from './useConfig';
 import {LoginForm} from './LoginForm';
+import {useTranslation} from 'react-i18next';
+import {LanguageSelector} from './LanguageSelector';
+import {RoomList} from './RoomList';
 
 const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) => {
+    const {t} = useTranslation();
     const [id, setId] = React.useState(() => getRoomFromURL() ?? config.roomName);
     const mode = authModeToRoomMode(config.authMode, config.loggedIn);
-    const [ownerLeave, setOwnerLeave] = React.useState(config.closeRoomWhenOwnerLeaves);
     const submit = () =>
         room({
             type: 'create',
             payload: {
                 mode,
-                closeOnOwnerLeave: ownerLeave,
+                closeOnOwnerLeave: false,  // 始终为false，不再提供选项
                 joinIfExist: true,
                 id: id || undefined,
             },
@@ -38,21 +39,12 @@ const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) 
                     fullWidth
                     value={id}
                     onChange={(e) => setId(e.target.value)}
-                    label="id"
+                    label={t('id')}
                     margin="dense"
-                />
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={ownerLeave}
-                            onChange={(_, checked) => setOwnerLeave(checked)}
-                        />
-                    }
-                    label="Close Room after you leave"
                 />
                 <Box paddingBottom={0.5}>
                     <Typography>
-                        Nat Traversal via:{' '}
+                        {t('natTraversal')}:{' '}
                         <Link
                             href="https://screego.net/#/nat-traversal"
                             target="_blank"
@@ -63,7 +55,7 @@ const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) 
                     </Typography>
                 </Box>
                 <Button onClick={submit} fullWidth variant="contained">
-                    Create or Join a Room
+                    {t('createOrJoinRoom')}
                 </Button>
             </FormControl>
         </div>
@@ -71,6 +63,7 @@ const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) 
 };
 
 export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig}) => {
+    const {t} = useTranslation();
     const [showLogin, setShowLogin] = React.useState(false);
 
     const canCreateRoom = config.authMode !== 'all';
@@ -80,9 +73,14 @@ export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig
         <Grid
             container={true}
             justifyContent="center"
-            style={{paddingTop: 50, maxWidth: 400, width: '100%', margin: '0 auto'}}
+            style={{paddingTop: 50, maxWidth: 400, width: '100%', margin: '0 auto', position: 'relative'}}
             spacing={4}
         >
+            {/* 语言切换器 - 右上角 */}
+            <div style={{position: 'absolute', top: 20, right: 20}}>
+                <LanguageSelector />
+            </div>
+
             <Grid size={12}>
                 <Typography align="center" gutterBottom>
                     <img src="./logo.svg" style={{width: 230}} alt="logo" />
@@ -96,10 +94,10 @@ export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig
                     ) : (
                         <>
                             <Typography style={{display: 'flex', alignItems: 'center'}}>
-                                <span style={{flex: 1}}>Hello {config.user}!</span>{' '}
+                                <span style={{flex: 1}}>{t('hello')} {config.user}!</span>{' '}
                                 {config.loggedIn ? (
                                     <Button variant="outlined" size="small" onClick={config.logout}>
-                                        Logout
+                                        {t('logout')}
                                     </Button>
                                 ) : (
                                     <Button
@@ -107,7 +105,7 @@ export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig
                                         size="small"
                                         onClick={() => setShowLogin(true)}
                                     >
-                                        Login
+                                        {t('login')}
                                     </Button>
                                 )}
                             </Typography>
@@ -117,8 +115,17 @@ export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig
                     )}
                 </Paper>
             </Grid>
-            <div style={{position: 'absolute', margin: '0 auto', bottom: 0}}>
-                Screego {config.version} |{' '}
+
+            {/* 房间列表 - 仅在没有登录且允许查看时显示 */}
+            {!loginVisible && (
+                <Grid size={12}>
+                    <RoomList room={room} />
+                </Grid>
+            )}
+
+            {/* 版本信息 - 简单放在房间列表下面 */}
+            <div style={{textAlign: 'center', marginTop: '20px'}}>
+                {t('screegoVersion')} {config.version} |{' '}
                 <Link href="https://github.com/screego/server/">GitHub</Link>
             </div>
         </Grid>
