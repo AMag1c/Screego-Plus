@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     Box,
     Paper,
@@ -13,8 +12,6 @@ import {
     Tooltip,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {RoomInfoSimple} from './message';
-import {useRoomID} from './useRoomID';
 import {useTranslation} from 'react-i18next';
 import {useRoomList} from './useRoomList';
 
@@ -24,7 +21,6 @@ interface RoomListProps {
 
 export const RoomList = ({room}: RoomListProps) => {
     const {t} = useTranslation();
-    const [, setRoomID] = useRoomID();
     const {rooms, loading, refreshRooms} = useRoomList();
 
     const handleJoinRoom = (roomId: string) => {

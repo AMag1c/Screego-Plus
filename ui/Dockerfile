@@ -3,10 +3,11 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm ci --legacy-peer-deps
 
 COPY . .
-RUN npm run build
+RUN chmod +x node_modules/.bin/* && npm run build
 
 # 生产阶段 - 使用nginx提供前端文件
 FROM nginx:alpine

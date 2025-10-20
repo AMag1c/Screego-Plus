@@ -27,7 +27,12 @@
       "Bash(powershell -Command \"Stop-Process -Id 25848 -Force\")",
       "Bash(cmd.exe /c \"taskkill /F /PID 608\")",
       "Bash(powershell -Command \"Stop-Process -Id 608 -Force\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(if exist docker-compose.prod.yml del docker-compose.prod.yml)",
+      "Bash(if exist Dockerfile.backend del Dockerfile.backend)",
+      "Bash(if exist .env.prod.example del .env.prod.example)",
+      "Bash(if exist DEPLOY.md del DEPLOY.md)",
+      "Bash(cmd /c \"if exist .env.prod.example del .env.prod.example & if exist docker-compose.prod.yml del docker-compose.prod.yml & if exist Dockerfile.backend del Dockerfile.backend & echo Done\")"
     ],
     "deny": [],
     "ask": []

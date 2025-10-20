@@ -1,0 +1,27 @@
+# 开发文件
+start.go
+.env.example
+
+# Node modules
+ui/node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# 构建产物
+ui/build
+ui/dist
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.bak

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 前端服务
   screego-frontend:
@@ -9,7 +7,7 @@ services:
     container_name: screego-frontend
     restart: unless-stopped
     ports:
-      - "9100:9100"      # 前端开发服务器
+      - "9100:9100"      # 前端服务
     networks:
       - screego-network
     depends_on:
@@ -17,28 +15,32 @@ services:
 
   # 后端服务
   screego-backend:
-    image: screego/server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: screego-backend
     restart: unless-stopped
     ports:
-      - "9101:9101"      # 后端API服务器
-      - "3478:3478/tcp"   # TURN服务器TCP
-      - "3478:3478/udp"   # TURN服务器UDP
-      - "50000:60000/udp" # TURN端口范围UDP
+      - "9101:9101"         # 后端API服务器
+      - "3478:3478/tcp"     # TURN服务器TCP
+      - "3478:3478/udp"     # TURN服务器UDP
+      - "50000-50100:50000-50100/udp"  # TURN端口范围（限制为100个端口）
     environment:
-      - SCREEGO_EXTERNAL_IP=${SCREEGO_EXTERNAL_IP:-127.0.0.1}
-      - SCREEGO_AUTH_MODE=all
-      - SCREEGO_LOG_LEVEL=info
+      # 重要：替换为你的服务器公网IP
+      - SCREEGO_EXTERNAL_IP=${SCREEGO_EXTERNAL_IP}
+      - SCREEGO_SERVER_TLS=false
       - SCREEGO_SERVER_ADDRESS=:9101
-    volumes:
-      - ./screego.config:/app/screego.config:ro
+      - SCREEGO_TURN_ADDRESS=:3478
+      - SCREEGO_TURN_PORT_RANGE=50000:50100
+      - SCREEGO_AUTH_MODE=none
+      - SCREEGO_CORS_ALLOWED_ORIGINS=.*
+      - SCREEGO_LOG_LEVEL=info
+      - SCREEGO_SESSION_TIMEOUT_SECONDS=3600
+      - SCREEGO_CLOSE_ROOM_WHEN_OWNER_LEAVES=false
+      - SCREEGO_TRUST_PROXY_HEADERS=true
     networks:
       - screego-network
 
 networks:
   screego-network:
     driver: bridge
-
-volumes:
-  screego-data:
-    driver: local

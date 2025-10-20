@@ -14,30 +14,12 @@ import {Video} from './Video';
 import makeStyles from '@mui/styles/makeStyles';
 import {ConnectedRoom} from './useRoom';
 import {useSnackbar} from 'notistack';
-import {RoomUser} from './message';
 import {useSettings, VideoDisplayMode} from './settings';
 import {SettingDialog} from './SettingDialog';
 import {MemberManageDialog} from './MemberManageDialog';
 import {useTranslation} from 'react-i18next';
 
 const HostStream: unique symbol = Symbol('mystream');
-
-const flags = (user: RoomUser, t: (key: string) => string) => {
-    const result: string[] = [];
-    if (user.you) {
-        result.push(t('you'));
-    }
-    if (user.owner) {
-        result.push(t('owner'));
-    }
-    if (user.streaming) {
-        result.push(t('streaming'));
-    }
-    if (!result.length) {
-        return '';
-    }
-    return ` (${result.join(', ')})`;
-};
 
 interface FullScreenHTMLVideoElement extends HTMLVideoElement {
     msRequestFullscreen?: () => void;
