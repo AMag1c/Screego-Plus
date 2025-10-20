@@ -29,6 +29,7 @@
     "dissolveRoom": "解散房间",
     "preferredCodec": "首选编解码器",
     "displayMode": "显示模式",
+    "resolution": "分辨率",
     "frameRate": "帧率",
     "cancel": "取消",
     "save": "保存",

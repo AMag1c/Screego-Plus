@@ -427,8 +427,24 @@ export const useRoom = (config: UIConfig): UseRoom => {
             return;
         }
         try {
+            const settings = loadSettings();
+
+            // 根据分辨率设置获取宽高
+            let width = 1280, height = 720;
+            if (settings.resolution === '1080p') {
+                width = 1920;
+                height = 1080;
+            } else if (settings.resolution === '1440p') {
+                width = 2560;
+                height = 1440;
+            }
+
             stream.current = await navigator.mediaDevices.getDisplayMedia({
-                video: {frameRate: loadSettings().framerate},
+                video: {
+                    frameRate: settings.framerate,
+                    width: {ideal: width},
+                    height: {ideal: height},
+                },
                 audio: {
                     echoCancellation: false,
                     autoGainControl: false,

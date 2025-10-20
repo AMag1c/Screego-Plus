@@ -17,6 +17,7 @@ import {
     PreferredCodec,
     Settings,
     VideoDisplayMode,
+    VideoResolution,
 } from './settings';
 import {NumberField} from './NumberField';
 import {useTranslation} from 'react-i18next';
@@ -53,11 +54,12 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
             framerate: 30,
             preferCodec: CodecDefault,
             name: '',
+            resolution: VideoResolution.R720p,
         };
         setSettingsInput(defaultSettings);
     };
 
-    const {name, preferCodec, displayMode, framerate} = settingsInput;
+    const {name, preferCodec, displayMode, framerate, resolution} = settingsInput;
 
     // 显示模式翻译函数
     const getDisplayModeLabel = (mode: VideoDisplayMode): string => {
@@ -72,6 +74,20 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                 return t('displayModeOriginalSize');
             default:
                 return mode;
+        }
+    };
+
+    // 分辨率翻译函数
+    const getResolutionLabel = (res: VideoResolution): string => {
+        switch (res) {
+            case VideoResolution.R720p:
+                return '720p';
+            case VideoResolution.R1080p:
+                return '1080p';
+            case VideoResolution.R1440p:
+                return '1440p';
+            default:
+                return res;
         }
     };
 
@@ -138,6 +154,21 @@ export const SettingDialog = ({open, setOpen, updateName, saveSettings}: Setting
                             onChange={(framerate) => setSettingsInput((c) => ({...c, framerate}))}
                             value={framerate}
                             fullWidth
+                        />
+                    </Box>
+                    <Box paddingTop={1}>
+                        <Autocomplete<VideoResolution>
+                            options={Object.values(VideoResolution)}
+                            getOptionLabel={getResolutionLabel}
+                            onChange={(_, value) =>
+                                setSettingsInput((c) => ({
+                                    ...c,
+                                    resolution: value ?? VideoResolution.R720p,
+                                }))
+                            }
+                            value={resolution}
+                            fullWidth
+                            renderInput={(params) => <TextField {...params} label={t('resolution')} />}
                         />
                     </Box>
                 </form>

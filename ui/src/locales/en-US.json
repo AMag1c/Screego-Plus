@@ -29,6 +29,7 @@
     "dissolveRoom": "Dissolve Room",
     "preferredCodec": "Preferred Codec",
     "displayMode": "Display Mode",
+    "resolution": "Resolution",
     "frameRate": "FrameRate",
     "cancel": "Cancel",
     "save": "Save",

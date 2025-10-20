@@ -38,6 +38,7 @@ export interface Settings {
     displayMode: VideoDisplayMode;
     preferCodec?: PreferredCodec;
     framerate: number;
+    resolution: VideoResolution;
 }
 export interface PreferredCodec {
     mimeType: string;
@@ -51,6 +52,12 @@ export enum VideoDisplayMode {
     OriginalSize = 'OriginalSize',
 }
 
+export enum VideoResolution {
+    R720p = '720p',
+    R1080p = '1080p',
+    R1440p = '1440p',
+}
+
 const SettingsKey = 'screegoSettings';
 
 export const loadSettings = (): Settings => {
@@ -59,6 +66,7 @@ export const loadSettings = (): Settings => {
     const defaults: Settings = {
         displayMode: VideoDisplayMode.FitToWindow,
         framerate: 30,
+        resolution: VideoResolution.R720p,
     };
 
     if (settings && typeof settings === 'object') {
@@ -69,6 +77,9 @@ export const loadSettings = (): Settings => {
                 Object.values(VideoDisplayMode).find((mode) => mode === settings.displayMode) ??
                 defaults.displayMode,
             preferCodec: settings.preferCodec ?? CodecDefault,
+            resolution:
+                Object.values(VideoResolution).find((res) => res === settings.resolution) ??
+                defaults.resolution,
         };
     }
     return defaults;
