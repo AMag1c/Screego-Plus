@@ -14,7 +14,20 @@
       "Bash(cmd.exe /c \"taskkill /F /PID 15808 /T\")",
       "Bash(curl:*)",
       "Bash(powershell.exe:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 33040 /T\")",
+      "Bash(cmd.exe /c \"taskkill /F /IM go.exe /T\")",
+      "Bash(tasklist:*)",
+      "Bash(cmd.exe /c \"taskkill /F /IM node.exe /T\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 5664 /T\")",
+      "Bash(powershell -Command \"Stop-Process -Id 5664 -Force\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 22668\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 25848\")",
+      "Bash(powershell -Command \"Stop-Process -Id 25848 -Force\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 608\")",
+      "Bash(powershell -Command \"Stop-Process -Id 608 -Force\")",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

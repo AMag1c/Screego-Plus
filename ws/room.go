@@ -26,6 +26,7 @@ type Room struct {
 	Mode              ConnectionMode
 	Users             map[xid.ID]*User
 	Sessions          map[xid.ID]*RoomSession
+	BannedIPs         map[string]bool // 黑名单：被永久踢出的用户IP地址
 	CreatedAt         time.Time
 }
 
@@ -107,6 +108,7 @@ func (r *Room) notifyInfoChanged() {
 				Streaming: user.Streaming,
 				You:       current == user,
 				Owner:     user.Owner,
+				CanShare:  user.CanShare,
 			})
 		}
 
@@ -138,6 +140,7 @@ type User struct {
 	Name      string
 	Streaming bool
 	Owner     bool
+	CanShare  bool // 是否允许投屏，默认为 true
 	_write    chan<- outgoing.Message
 }
 

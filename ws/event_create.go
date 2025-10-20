@@ -64,6 +64,7 @@ func (e *Create) Execute(rooms *Rooms, current ClientInfo) error {
 		CloseOnOwnerLeave: e.CloseOnOwnerLeave,
 		Mode:              e.Mode,
 		Sessions:          map[xid.ID]*RoomSession{},
+		BannedIPs:         map[string]bool{}, // 初始化黑名单
 		CreatedAt:         time.Now(),
 		Users: map[xid.ID]*User{
 			current.ID: {
@@ -71,6 +72,7 @@ func (e *Create) Execute(rooms *Rooms, current ClientInfo) error {
 				Name:      name,
 				Streaming: false,
 				Owner:     true,
+				CanShare:  true,
 				Addr:      current.Addr,
 				_write:    current.Write,
 			},

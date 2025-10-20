@@ -13,16 +13,24 @@ import {FCreateRoom, UseRoom} from './useRoom';
 import {UIConfig} from './message';
 import {getRoomFromURL} from './useRoomID';
 import {authModeToRoomMode, UseConfig} from './useConfig';
-import {LoginForm} from './LoginForm';
 import {useTranslation} from 'react-i18next';
 import {LanguageSelector} from './LanguageSelector';
 import {RoomList} from './RoomList';
+import {loadSettings, saveSettings} from './settings';
 
 const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) => {
     const {t} = useTranslation();
     const [id, setId] = React.useState(() => getRoomFromURL() ?? config.roomName);
+    const [username, setUsername] = React.useState(() => loadSettings().name || '');
     const mode = authModeToRoomMode(config.authMode, config.loggedIn);
-    const submit = () =>
+    const submit = () => {
+        // 保存用户名到localStorage
+        if (username) {
+            const settings = loadSettings();
+            settings.name = username;
+            saveSettings(settings);
+        }
+
         room({
             type: 'create',
             payload: {
@@ -30,11 +38,21 @@ const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) 
                 closeOnOwnerLeave: false,  // 始终为false，不再提供选项
                 joinIfExist: true,
                 id: id || undefined,
+                username: username || undefined,
             },
         });
+    };
     return (
         <div>
             <FormControl fullWidth>
+                <TextField
+                    fullWidth
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    label={t('username')}
+                    margin="dense"
+                    placeholder={t('usernameOptional')}
+                />
                 <TextField
                     fullWidth
                     value={id}
@@ -64,10 +82,6 @@ const CreateRoom = ({room, config}: Pick<UseRoom, 'room'> & {config: UIConfig}) 
 
 export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig}) => {
     const {t} = useTranslation();
-    const [showLogin, setShowLogin] = React.useState(false);
-
-    const canCreateRoom = config.authMode !== 'all';
-    const loginVisible = !config.loggedIn && (showLogin || !canCreateRoom);
 
     return (
         <Grid
@@ -86,42 +100,14 @@ export const RoomManage = ({room, config}: {room: FCreateRoom; config: UseConfig
                     <img src="./logo.svg" style={{width: 230}} alt="logo" />
                 </Typography>
                 <Paper elevation={3} style={{padding: 20}}>
-                    {loginVisible ? (
-                        <LoginForm
-                            config={config}
-                            hide={canCreateRoom ? () => setShowLogin(false) : undefined}
-                        />
-                    ) : (
-                        <>
-                            <Typography style={{display: 'flex', alignItems: 'center'}}>
-                                <span style={{flex: 1}}>{t('hello')} {config.user}!</span>{' '}
-                                {config.loggedIn ? (
-                                    <Button variant="outlined" size="small" onClick={config.logout}>
-                                        {t('logout')}
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={() => setShowLogin(true)}
-                                    >
-                                        {t('login')}
-                                    </Button>
-                                )}
-                            </Typography>
-
-                            <CreateRoom room={room} config={config} />
-                        </>
-                    )}
+                    <CreateRoom room={room} config={config} />
                 </Paper>
             </Grid>
 
-            {/* 房间列表 - 仅在没有登录且允许查看时显示 */}
-            {!loginVisible && (
-                <Grid size={12}>
-                    <RoomList room={room} />
-                </Grid>
-            )}
+            {/* 房间列表 */}
+            <Grid size={12}>
+                <RoomList room={room} />
+            </Grid>
 
             {/* 版本信息 - 简单放在房间列表下面 */}
             <div style={{textAlign: 'center', marginTop: '20px'}}>

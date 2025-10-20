@@ -37,6 +37,7 @@ export interface UseRoom {
     stopShare: () => void;
     exitRoom: () => void;
     dissolveRoom: () => void;
+    ownerAction: (action: string, targetUserId?: string) => void;
 }
 
 const relayConfig: Partial<RTCConfiguration> =
@@ -193,7 +194,7 @@ export const useRoom = (config: UIConfig): UseRoom => {
                             setRoomID(event.payload.id);
                         } else {
                             resolve();
-                            enqueueSnackbar(`${t('unknownEvent')}: ${event.type}`, {variant: 'error'});
+                            enqueueSnackbar(`${t('unknownEvent')}: ${event.type}`, {variant: 'error', autoHideDuration: 10000});
                             ws.close(1000, 'received unknown event');
                         }
                         return;
@@ -306,16 +307,49 @@ export const useRoom = (config: UIConfig): UseRoom => {
                         case 'Error':
                             // 处理后端错误消息
                             let errorMessage = event.payload.message;
+
                             // 翻译特定的错误消息
-                            if (errorMessage === 'another user is already sharing screen') {
-                                errorMessage = t('alreadySharing');
+                            const errorTranslations: Record<string, string> = {
+                                'another user is already sharing screen': t('alreadySharing'),
+                                'bannedFromRoom': t('bannedByOwner'),
+                                'you do not have permission to share screen': t('noPermissionToShare'),
+                                'cannot join room, you are already in one': t('alreadyInRoom'),
+                                'only owner can perform this action': t('onlyOwnerCanDissolve'),
+                                'targetUserId is required for individual actions': t('targetUserIdRequired'),
+                                'invalid user ID': t('invalidUserId'),
+                                'user not found': t('userNotFound'),
+                                'cannot perform action on yourself': t('cannotActionOnYourself'),
+                                'you are not in a room': t('notInRoom'),
+                                'you are not in this room': t('notInThisRoom'),
+                                'only the room owner can dissolve the room': t('onlyOwnerCanDissolve'),
+                                'not connected': t('notConnected'),
+                                'permission denied': t('permissionDenied'),
+                            };
+
+                            // 检查是否是"房间不存在"错误
+                            if (errorMessage.includes('does not exist') || errorMessage.includes('does already exist')) {
+                                if (errorMessage.includes('does not exist')) {
+                                    errorMessage = t('roomNotExist');
+                                } else {
+                                    errorMessage = t('roomAlreadyExists');
+                                }
+                                // 显示错误提示
+                                enqueueSnackbar(errorMessage, {variant: 'error', autoHideDuration: 10000});
+                                // 清除URL参数并跳转回主页
+                                setRoomID(undefined);
+                                setState(false);
+                                return;
                             }
-                            enqueueSnackbar(errorMessage, {variant: 'error'});
+
+                            // 应用翻译
+                            errorMessage = errorTranslations[errorMessage] || errorMessage;
+
+                            enqueueSnackbar(errorMessage, {variant: 'error', autoHideDuration: 10000});
                             return;
                         default:
                             // Handle unknown message types
                             const unknownEvent = event as any;
-                            enqueueSnackbar(`${t('malformedMessage')}: ${unknownEvent.type}`, {variant: 'error'});
+                            enqueueSnackbar(`${t('malformedMessage')}: ${unknownEvent.type}`, {variant: 'error', autoHideDuration: 10000});
                     }
                 };
                 ws.onclose = (event) => {
@@ -325,19 +359,36 @@ export const useRoom = (config: UIConfig): UseRoom => {
                     }
                     // 翻译后端返回的关闭原因
                     let message = event.reason;
-                    if (event.reason === 'Room Dissolved') {
-                        message = t('roomDissolvedByOwner');
-                    } else if (event.reason === 'User Left') {
-                        message = t('userLeft');
-                    } else if (event.reason && event.reason.trim()) {
-                        // 如果有其他原因，直接显示
-                        message = event.reason;
-                    } else {
-                        // 如果原因为空，不显示错误
+
+                    // 翻译映射表
+                    const closeReasonTranslations: Record<string, string> = {
+                        'Room Dissolved': t('roomDissolvedByOwner'),
+                        'User Left': t('userLeft'),
+                        'kickedByOwner': t('kickedByOwner'),
+                        'bannedByOwner': t('bannedByOwner'),
+                        'bannedFromRoom': t('bannedByOwner'),
+                    };
+
+                    // 检查是否是"房间不存在"错误
+                    if (message.includes('does not exist')) {
+                        message = t('roomNotExist');
+                        enqueueSnackbar(message, {variant: 'error', autoHideDuration: 10000});
+                        // 清除URL参数并跳转回主页
+                        setRoomID(undefined);
                         setState(false);
                         return;
                     }
-                    enqueueSnackbar(message, {variant: event.reason === 'Room Dissolved' ? 'info' : 'error'});
+
+                    // 应用翻译
+                    message = closeReasonTranslations[message] || message;
+
+                    if (message && message.trim()) {
+                        const isInfo = message === t('roomDissolvedByOwner');
+                        enqueueSnackbar(message, {
+                            variant: isInfo ? 'info' : 'error',
+                            autoHideDuration: isInfo ? 4000 : 10000
+                        });
+                    }
                     setState(false);
                 };
                 ws.onerror = (err) => {
@@ -345,11 +396,14 @@ export const useRoom = (config: UIConfig): UseRoom => {
                         resolve();
                         first = false;
                     }
-                    enqueueSnackbar(err?.toString(), {variant: 'error', persist: true});
+                    enqueueSnackbar(err?.toString(), {variant: 'error', autoHideDuration: 10000});
                     setState(false);
                 };
                 ws.onopen = () => {
-                    create.payload.username = loadSettings().name;
+                    // 如果没有提供username，则从settings读取
+                    if (!create.payload.username) {
+                        create.payload.username = loadSettings().name;
+                    }
                     send(create);
                 };
             });
@@ -361,14 +415,14 @@ export const useRoom = (config: UIConfig): UseRoom => {
         if (!navigator.mediaDevices) {
             enqueueSnackbar(
                 t('couldNotStartPresentationHTTPS'),
-                {variant: 'error', persist: true}
+                {variant: 'error', autoHideDuration: 10000}
             );
             return;
         }
         if (typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
             enqueueSnackbar(
                 `${t('couldNotStartPresentationBrowser')} (mediaDevices.getDeviceMedia ${typeof navigator.mediaDevices.getDisplayMedia})`,
-                {variant: 'error', persist: true}
+                {variant: 'error', autoHideDuration: 10000}
             );
             return;
         }
@@ -388,7 +442,7 @@ export const useRoom = (config: UIConfig): UseRoom => {
             console.log('Could not getDisplayMedia', e);
             enqueueSnackbar(`${t('couldNotStartPresentationError')}. ${e}`, {
                 variant: 'error',
-                persist: true,
+                autoHideDuration: 10000,
             });
             return;
         }
@@ -453,6 +507,19 @@ export const useRoom = (config: UIConfig): UseRoom => {
         exitRoom();
     };
 
+    const ownerAction = (action: string, targetUserId?: string): void => {
+        // 发送房主操作消息到服务器
+        if (conn.current && conn.current.readyState === conn.current.OPEN) {
+            conn.current.send(JSON.stringify({
+                type: 'owneraction',
+                payload: {
+                    action: action,
+                    targetUserId: targetUserId || ''
+                }
+            }));
+        }
+    };
+
     React.useEffect(() => {
         if (roomID) {
             const create = getFromURL('create') === 'true';
@@ -478,5 +545,5 @@ export const useRoom = (config: UIConfig): UseRoom => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return {state, room, share, stopShare, setName, exitRoom, dissolveRoom};
+    return {state, room, share, stopShare, setName, exitRoom, dissolveRoom, ownerAction};
 };

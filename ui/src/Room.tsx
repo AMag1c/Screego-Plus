@@ -17,6 +17,7 @@ import {useSnackbar} from 'notistack';
 import {RoomUser} from './message';
 import {useSettings, VideoDisplayMode} from './settings';
 import {SettingDialog} from './SettingDialog';
+import {MemberManageDialog} from './MemberManageDialog';
 import {useTranslation} from 'react-i18next';
 
 const HostStream: unique symbol = Symbol('mystream');
@@ -63,6 +64,7 @@ export const Room = ({
     setName,
     exitRoom,
     dissolveRoom,
+    ownerAction,
 }: {
     state: ConnectedRoom;
     share: () => void;
@@ -70,10 +72,12 @@ export const Room = ({
     setName: (name: string) => void;
     exitRoom: () => void;
     dissolveRoom: () => void;
+    ownerAction: (action: string, targetUserId?: string) => void;
 }) => {
     const {t} = useTranslation();
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
+    const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
     const {enqueueSnackbar} = useSnackbar();
     const [settings, setSettings] = useSettings();
     const [showControl, setShowControl] = React.useState(true);
@@ -124,7 +128,7 @@ export const Room = ({
     const copyLink = () => {
         navigator?.clipboard?.writeText(window.location.href)?.then(
             () => enqueueSnackbar(t('linkCopied'), {variant: 'success'}),
-            (err) => enqueueSnackbar(t('copyFailed') + ' ' + err, {variant: 'error'})
+            (err) => enqueueSnackbar(t('copyFailed') + ' ' + err, {variant: 'error', autoHideDuration: 10000})
         );
     };
 
@@ -255,6 +259,10 @@ export const Room = ({
                                 (user) => user.streaming && !user.you
                             );
 
+                            // 获取当前用户的投屏权限
+                            const currentUser = state.users.find(u => u.you);
+                            const canShare = currentUser?.canShare !== false; // 默认为true
+
                             if (state.hostStream) {
                                 // 自己正在投屏，显示停止按钮
                                 return (
@@ -267,8 +275,11 @@ export const Room = ({
                             } else if (someoneElseStreaming) {
                                 // 其他人在投屏，隐藏开始按钮
                                 return null;
+                            } else if (!canShare) {
+                                // 没有投屏权限，不显示按钮
+                                return null;
                             } else {
-                                // 没人投屏，显示开始按钮
+                                // 有权限且没人投屏，显示开始按钮
                                 return (
                                     <Tooltip title={t('startPresentation')} arrow>
                                         <IconButton onClick={share} size="large">
@@ -279,23 +290,12 @@ export const Room = ({
                             }
                         })()}
 
-                        <Tooltip
-                            classes={{tooltip: classes.noMaxWidth}}
-                            title={
-                                <div>
-                                    <Typography variant="h5">{t('memberList')}</Typography>
-                                    {state.users.map((user) => (
-                                        <Typography key={user.id}>
-                                            {user.name} {flags(user, t)}
-                                        </Typography>
-                                    ))}
-                                </div>
-                            }
-                            arrow
-                        >
-                            <Badge badgeContent={state.users.length} color="primary">
-                                <PeopleIcon fontSize="large" />
-                            </Badge>
+                        <Tooltip title={t('memberList')} arrow>
+                            <IconButton onClick={() => setMemberDialogOpen(true)} size="large">
+                                <Badge badgeContent={state.users.length} color="primary">
+                                    <PeopleIcon fontSize="large" />
+                                </Badge>
+                            </IconButton>
                         </Tooltip>
                         <Tooltip title={t('fullscreen')} arrow>
                             <IconButton
@@ -313,13 +313,6 @@ export const Room = ({
                             </IconButton>
                         </Tooltip>
 
-                        {/* 退出房间按钮 */}
-                        <Tooltip title={t('exitRoom')} arrow>
-                            <IconButton onClick={exitRoom} size="large">
-                                <ExitToAppIcon fontSize="large" />
-                            </IconButton>
-                        </Tooltip>
-
                         {/* 房主解散房间按钮 */}
                         {state.users.find(u => u.you && u.owner) && (
                             <Tooltip title={t('dissolveRoom')} arrow>
@@ -332,6 +325,13 @@ export const Room = ({
                                 </IconButton>
                             </Tooltip>
                         )}
+
+                        {/* 退出房间按钮 */}
+                        <Tooltip title={t('exitRoom')} arrow>
+                            <IconButton onClick={exitRoom} size="large">
+                                <ExitToAppIcon fontSize="large" />
+                            </IconButton>
+                        </Tooltip>
                     </Box>
                 </Paper>
             )}
@@ -386,6 +386,12 @@ export const Room = ({
                     setOpen={setOpen}
                     updateName={setName}
                     saveSettings={setSettings}
+                />
+                <MemberManageDialog
+                    open={memberDialogOpen}
+                    onClose={() => setMemberDialogOpen(false)}
+                    users={state.users}
+                    onOwnerAction={ownerAction}
                 />
             </div>
         </div>

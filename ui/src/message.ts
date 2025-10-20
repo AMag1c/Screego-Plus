@@ -68,6 +68,7 @@ export interface RoomUser {
     streaming: boolean;
     you: boolean;
     owner: boolean;
+    canShare?: boolean;  // 添加投屏权限字段
 }
 
 export interface P2PMessage<T> {
@@ -88,6 +89,7 @@ export type StartSharing = Typed<{}, 'share'>;
 export type StopShare = Typed<{}, 'stopshare'>;
 export type ExitRoom = Typed<{}, 'exit'>;
 export type DissolveRoom = Typed<{}, 'dissolve'>;
+export type OwnerAction = Typed<{action: string; targetUserId: string}, 'owneraction'>;
 export type RoomCreate = Typed<RoomConfiguration & {joinIfExist?: boolean}, 'create'>;
 export type JoinRoom = Typed<JoinConfiguration, 'join'>;
 export type EndShare = Typed<string, 'endshare'>;
@@ -115,4 +117,5 @@ export type OutgoingMessage =
     | ClientAnswer
     | StartSharing
     | ExitRoom
-    | DissolveRoom;
+    | DissolveRoom
+    | OwnerAction;

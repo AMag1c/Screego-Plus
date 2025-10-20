@@ -18,6 +18,12 @@ func (e *StartShare) Execute(rooms *Rooms, current ClientInfo) error {
 		return err
 	}
 
+	// 检查用户是否有投屏权限
+	currentUser := room.Users[current.ID]
+	if currentUser != nil && !currentUser.CanShare {
+		return fmt.Errorf("you do not have permission to share screen")
+	}
+
 	// 检查是否已经有人在投屏
 	for _, user := range room.Users {
 		if user.Streaming && user.ID != current.ID {

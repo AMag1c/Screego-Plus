@@ -24,6 +24,13 @@ func (e *Join) Execute(rooms *Rooms, current ClientInfo) error {
 	if !ok {
 		return fmt.Errorf("room with id %s does not exist", e.ID)
 	}
+
+	// 检查用户IP是否在黑名单中
+	userIP := current.Addr.String()
+	if room.BannedIPs[userIP] {
+		return fmt.Errorf("bannedFromRoom")
+	}
+
 	name := e.UserName
 	if current.Authenticated {
 		name = current.AuthenticatedUser
@@ -37,6 +44,7 @@ func (e *Join) Execute(rooms *Rooms, current ClientInfo) error {
 		Name:      name,
 		Streaming: false,
 		Owner:     false,
+		CanShare:  true,
 		Addr:      current.Addr,
 		_write:    current.Write,
 	}

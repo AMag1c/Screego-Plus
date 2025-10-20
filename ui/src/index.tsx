@@ -79,6 +79,11 @@ const Snackbar: React.FC<React.PropsWithChildren> = ({children}) => {
         <SnackbarProvider
             maxSnack={3}
             ref={notistackRef}
+            autoHideDuration={4000}
+            anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+            }}
             action={(key) => (
                 <Button onClick={onClickDismiss(key)} size="small">
                     {t('dismiss')}
